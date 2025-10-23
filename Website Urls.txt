@@ -1,0 +1,28 @@
+LIST OF MALICIOUS URLs
+
+
+1.http://www.paypal.security.account.login12345.com/
+2.http://www.amazon.account.security-verification.com/
+3.ttp://www.tesla.account-login-update.com/
+4.http://www.instagram.login-verify.com/
+5.http://www.banking-login-update.secureauth.com/
+6.http://www.gmail-service-verify.com/
+7.http://45.125.66.68/hiddenbin/boatnet.x86
+8.http://www.download-crack-spotify.com/
+9.http://www.youtubedownload-exe.com/
+10.http://www.freephotoshop-download.com/
+11.http://www.bettervpn-download.com/
+
+LIST of Legitimate URLs
+
+1.https://www.google.com/
+2.https://www.amazon.com/
+3.https://www.facebook.com/
+4.https://www.youtube.com/
+5.https://www.linkedin.com/
+6.https://www.apple.com/
+7.https://www.microsoft.com/
+8.https://www.wikipedia.org/
+9.https://www.github.com/
+10.https://www.reddit.com/
+11.https://www.instagram.com/
