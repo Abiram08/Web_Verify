@@ -1,4 +1,7 @@
-<!DOCTYPE html>
+#!/usr/bin/env python3
+"""Script to create the index.html file"""
+
+html_content = '''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -465,9 +468,9 @@
             <div class="tagline">Advanced URL Security Analyzer</div>
             <p style="color: var(--text-dim); margin-top: 10px;">Multi-layered protection using ML, AI, and threat intelligence</p>
             <div class="status-badges" id="statusBadges">
+                <div class="badge"><span class="badge-dot"></span> ML Model</div>
                 <div class="badge"><span class="badge-dot"></span> Gemini AI</div>
                 <div class="badge"><span class="badge-dot"></span> VirusTotal</div>
-                <div class="badge"><span class="badge-dot"></span> ML Model</div>
             </div>
         </div>
 
@@ -507,31 +510,7 @@
                 </div>
             </div>
 
-                <div class="analysis-card">
-                <!-- Gemini first -->
-                <div class="analysis-card">
-                    <div class="analysis-header">
-                        <div class="analysis-icon">�</div>
-                        <div class="analysis-title">Gemini AI</div>
-                    </div>
-                    <div class="analysis-result" id="aiVerdict">-</div>
-                    <div class="analysis-badge" id="aiMessage" style="display:none"></div>
-                    <div class="analysis-detail" id="aiDetail">Context-aware threat assessment</div>
-                    <div class="analysis-badge" id="aiConfidence">Confidence: -</div>
-                </div>
-
-                <!-- VirusTotal second -->
-                <div class="analysis-card">
-                    <div class="analysis-header">
-                        <div class="analysis-icon">🛡️</div>
-                        <div class="analysis-title">VirusTotal</div>
-                    </div>
-                    <div class="analysis-result" id="vtVerdict">-</div>
-                    <div class="analysis-detail" id="vtDetail">70+ security vendors</div>
-                    <div class="analysis-badge" id="vtBadge">Status: -</div>
-                </div>
-
-                <!-- ML last -->
+            <div class="analysis-grid">
                 <div class="analysis-card">
                     <div class="analysis-header">
                         <div class="analysis-icon">🤖</div>
@@ -540,6 +519,26 @@
                     <div class="analysis-result" id="mlVerdict">-</div>
                     <div class="analysis-detail" id="mlDetail">Pattern-based analysis</div>
                     <div class="analysis-badge" id="mlConfidence">Confidence: -</div>
+                </div>
+
+                <div class="analysis-card">
+                    <div class="analysis-header">
+                        <div class="analysis-icon">🧠</div>
+                        <div class="analysis-title">Gemini AI</div>
+                    </div>
+                    <div class="analysis-result" id="aiVerdict">-</div>
+                    <div class="analysis-detail" id="aiDetail">Context-aware threat assessment</div>
+                    <div class="analysis-badge" id="aiConfidence">Confidence: -</div>
+                </div>
+
+                <div class="analysis-card">
+                    <div class="analysis-header">
+                        <div class="analysis-icon">🛡️</div>
+                        <div class="analysis-title">VirusTotal</div>
+                    </div>
+                    <div class="analysis-result" id="vtVerdict">-</div>
+                    <div class="analysis-detail" id="vtDetail">70+ security vendors</div>
+                    <div class="analysis-badge" id="vtBadge">Status: -</div>
                 </div>
             </div>
 
@@ -650,8 +649,6 @@
                 document.getElementById('aiVerdict').textContent = ai.verdict;
                 document.getElementById('aiDetail').textContent = 'Context-aware threat assessment';
                 document.getElementById('aiConfidence').textContent = `Confidence: ${ai.confidence_score}%`;
-                const aiMsg = document.getElementById('aiMessage');
-                aiMsg.style.display = 'none';
                 document.getElementById('aiSection').style.display = 'block';
                 document.getElementById('aiExplanation').textContent = ai.explanation;
 
@@ -669,13 +666,9 @@
                     document.getElementById('recommendationsSection').style.display = 'none';
                 }
             } else {
-                const aiMessage = (data.details.ai_analysis && data.details.ai_analysis.message) ? data.details.ai_analysis.message : 'AI analysis not available';
                 document.getElementById('aiVerdict').textContent = 'N/A';
                 document.getElementById('aiDetail').textContent = 'AI analysis not available';
-                document.getElementById('aiConfidence').textContent = '—';
-                const aiMsg = document.getElementById('aiMessage');
-                aiMsg.textContent = aiMessage;
-                aiMsg.style.display = 'inline-block';
+                document.getElementById('aiConfidence').textContent = 'Not configured';
                 document.getElementById('aiSection').style.display = 'none';
                 document.getElementById('recommendationsSection').style.display = 'none';
             }
@@ -719,7 +712,7 @@
                 item.className = 'detail-item';
                 const label = document.createElement('div');
                 label.className = 'detail-label';
-                label.textContent = key.replace(/_/g, ' ').replace(/\w/g, l => l.toUpperCase());
+                label.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 const valueDiv = document.createElement('div');
                 valueDiv.className = 'detail-value';
                 if (typeof value === 'boolean') {
@@ -736,4 +729,11 @@
         }
     </script>
 </body>
-</html>
+</html>'''
+
+# Write to file
+with open('Templates/index.html', 'w', encoding='utf-8') as f:
+    f.write(html_content)
+
+print("✅ Templates/index.html created successfully!")
+print(f"📄 File size: {len(html_content)} characters")

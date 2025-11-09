@@ -18,7 +18,7 @@ import hashlib
 # -------------------------
 APP_TITLE = "AI Phishing URL Detector (Gemini + VirusTotal)"
 DB_FILE = "phish_history.db"
-DEFAULT_LLM_MODEL = "gemini-1.5-flash"  # or gemini-1.5-pro
+DEFAULT_LLM_MODEL = "models/gemini-2.0-flash"  # updated to supported model
 
 # -------------------------
 # STREAMLIT UI SETUP
@@ -420,7 +420,10 @@ def combine_signals(ai_verdict, ai_score, vt_verdict):
 # Sidebar
 # -------------------------
 st.sidebar.header("Settings")
-model_choice = st.sidebar.selectbox("LLM model", [DEFAULT_LLM_MODEL, "gemini-1.5-pro", "gemini-1.0-pro"])
+model_choice = st.sidebar.selectbox(
+    "LLM model",
+    [DEFAULT_LLM_MODEL, "models/gemini-2.5-flash", "models/gemini-2.5-pro", "models/gemini-2.0-flash-001"]
+)
 st.sidebar.markdown("VirusTotal key configured: " + ("✅" if VIRUSTOTAL_API_KEY else "❌"))
 st.sidebar.markdown("History stored locally in SQLite")
 if st.sidebar.button("Show recent history"):
