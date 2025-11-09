@@ -121,18 +121,86 @@ def analyze_with_gemini(url, features, vt_data, ml_data):
         return {"available": False, "message": "Gemini API key not configured"}
     try:
         model = genai.GenerativeModel('models/gemini-2.0-flash')
-        feature_text = "\n".join([f"{k}: {v}" for k, v in features.items()])
-        vt_text = f"VirusTotal: {vt_data.get('verdict', 'N/A')}" if vt_data.get('available') else "VirusTotal: Not available"
+        feature_text = "\n".join([f"  • {k}: {v}" for k, v in features.items()])
+        vt_text = f"VirusTotal: {vt_data.get('verdict', 'N/A')} (Malicious: {vt_data.get('malicious', 0)}, Suspicious: {vt_data.get('suspicious', 0)})" if vt_data.get('available') else "VirusTotal: Not available"
         ml_text = f"ML Model: {ml_data.get('verdict', 'Unknown')} ({ml_data.get('confidence', 0)}% confidence)"
-        prompt = f"""You are a cybersecurity expert. Analyze this URL and provide a comprehensive assessment.
-\nURL: {url}\n\nFeatures:\n{feature_text}\n\n{vt_text}\n{ml_text}\n\nProvide a JSON response with:\n- verdict: \"Safe\" / \"Suspicious\" / \"Malicious\"\n- confidence_score: integer 0-100\n- risk_level: \"Low\" / \"Medium\" / \"High\" / \"Critical\"\n- explanation: detailed 2-3 sentence analysis\n- recommendations: list of 2-3 specific action items\n\nReturn ONLY valid JSON."""
-        response = model.generate_content(prompt, generation_config={'temperature': 0.2, 'max_output_tokens': 512})
+        
+        prompt = f"""You are an expert cybersecurity analyst specializing in phishing detection and URL threat assessment. 
+
+**URL TO ANALYZE:** {url}
+
+**TECHNICAL FEATURES:**
+{feature_text}
+
+**EXTERNAL INTELLIGENCE:**
+• {vt_text}
+• {ml_text}
+
+**TASK:** Provide a comprehensive, detailed threat analysis. Be thorough and specific.
+
+**ANALYSIS REQUIREMENTS:**
+
+1. **Domain Analysis:**
+   - Examine domain legitimacy, age, reputation
+   - Check for typosquatting, homograph attacks, suspicious TLDs
+   - Identify brand impersonation attempts
+
+2. **URL Structure Assessment:**
+   - Analyze suspicious patterns (excessive subdomains, long paths, encoded characters)
+   - Check for redirection tactics, URL shorteners
+   - Evaluate use of IP addresses vs domain names
+
+3. **Security Indicators:**
+   - SSL/HTTPS usage and validity concerns
+   - Presence of phishing keywords (login, verify, account, urgent, suspended)
+   - Suspicious query parameters or fragments
+
+4. **Behavioral Patterns:**
+   - Compare against known phishing/malware campaigns
+   - Cross-reference with VirusTotal and ML model findings
+   - Identify social engineering tactics
+
+5. **Risk Assessment:**
+   - Provide overall verdict with high confidence
+   - List specific red flags or green flags
+   - Explain reasoning clearly
+
+**OUTPUT FORMAT (strict JSON):**
+{{
+  "verdict": "Safe" or "Suspicious" or "Malicious",
+  "confidence_score": <integer 0-100>,
+  "risk_level": "Low" or "Medium" or "High" or "Critical",
+  "explanation": "<3-5 sentences explaining the verdict with specific evidence from the URL>",
+  "detailed_findings": {{
+    "domain_analysis": "<2-3 sentences about domain legitimacy>",
+    "url_structure": "<2-3 sentences about URL patterns and structure>",
+    "security_indicators": "<2-3 sentences about security concerns or positives>",
+    "threat_correlation": "<2-3 sentences comparing with VirusTotal/ML findings>"
+  }},
+  "red_flags": ["<specific issue 1>", "<specific issue 2>", "..."],
+  "green_flags": ["<positive indicator 1>", "<positive indicator 2>", "..."],
+  "recommendations": ["<action 1>", "<action 2>", "<action 3>"]
+}}
+
+Return ONLY valid JSON. Be specific and detailed."""
+        
+        response = model.generate_content(prompt, generation_config={'temperature': 0.3, 'max_output_tokens': 2048})
         text = response.text.strip() if hasattr(response, 'text') else str(response)
         text = re.sub(r"^```json|```\n|```", "", text).strip()
         m = re.search(r"\{.*\}", text, flags=re.DOTALL)
         json_text = m.group(0) if m else text
         result = json.loads(json_text)
-        return {"available": True, "verdict": result.get("verdict", "Unknown"), "confidence_score": result.get("confidence_score", 50), "risk_level": result.get("risk_level", "Medium"), "explanation": result.get("explanation", ""), "recommendations": result.get("recommendations", [])}
+        return {
+            "available": True, 
+            "verdict": result.get("verdict", "Unknown"), 
+            "confidence_score": result.get("confidence_score", 50), 
+            "risk_level": result.get("risk_level", "Medium"), 
+            "explanation": result.get("explanation", ""), 
+            "detailed_findings": result.get("detailed_findings", {}),
+            "red_flags": result.get("red_flags", []),
+            "green_flags": result.get("green_flags", []),
+            "recommendations": result.get("recommendations", [])
+        }
     except Exception as e:
         return {"available": False, "message": f"AI Error: {str(e)}"}
 
@@ -141,30 +209,55 @@ def analyze_with_gemini(url, features, vt_data, ml_data):
 # -------------------------
 def get_combined_verdict(ml_result, vt_result, ai_result):
     scores = []
+    weights = []
+    
     if ml_result['verdict'] == 'Phishing':
         scores.append(-50)
+        weights.append(1.0)
     elif ml_result['verdict'] == 'Legitimate':
         scores.append(50)
+        weights.append(1.0)
+    
     if vt_result.get('available'):
         if vt_result['verdict'] == 'Malicious':
             scores.append(-100)
+            weights.append(2.5)
         elif vt_result['verdict'] == 'Suspicious':
-            scores.append(-30)
+            scores.append(-50)
+            weights.append(2.0)
         elif vt_result['verdict'] == 'Safe':
-            scores.append(70)
+            scores.append(40)
+            weights.append(1.5)
+    
     if ai_result.get('available'):
-        if ai_result['verdict'] == 'Malicious':
-            scores.append(-80)
-        elif ai_result['verdict'] == 'Suspicious':
-            scores.append(-40)
-        elif ai_result['verdict'] == 'Safe':
-            scores.append(60)
-    avg_score = sum(scores) / len(scores) if scores else 0
-    if avg_score < -40:
+        ai_verdict = ai_result['verdict']
+        ai_confidence = ai_result.get('confidence_score', 50)
+        if ai_verdict == 'Malicious':
+            scores.append(-100)
+            weights.append(3.0)
+        elif ai_verdict == 'Suspicious':
+            scores.append(-70)
+            weights.append(2.5)
+        elif ai_verdict == 'Safe':
+            scores.append(50)
+            weights.append(2.0)
+    
+    if not scores:
+        avg_score = 0
+    else:
+        weighted_sum = sum(s * w for s, w in zip(scores, weights))
+        total_weight = sum(weights)
+        avg_score = weighted_sum / total_weight
+    
+    if ai_result.get('available') and ai_result['verdict'] in ['Malicious', 'Suspicious']:
+        if avg_score > -20:
+            avg_score = -20
+    
+    if avg_score < -50:
         return "Malicious", "Critical"
-    elif avg_score < -10:
+    elif avg_score < -15:
         return "Suspicious", "High"
-    elif avg_score < 20:
+    elif avg_score < 10:
         return "Suspicious", "Medium"
     else:
         return "Safe", "Low"

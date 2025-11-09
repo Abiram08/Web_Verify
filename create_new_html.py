@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+html_content = '''<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -443,8 +443,8 @@
             <div class="tagline">Advanced URL Security Analyzer</div>
             <p style="color: var(--text-dim); margin-top: 10px;">Multi-layered protection using ML, AI, and threat intelligence</p>
             <div class="status-badges" id="statusBadges">
-                <div class="badge"><span class="badge-dot"></span> ML Detection</div>
-                <div class="badge"><span class="badge-dot"></span> AI Intelligence</div>
+                <div class="badge"><span class="badge-dot"></span> ML Model</div>
+                <div class="badge"><span class="badge-dot"></span> Gemini AI</div>
                 <div class="badge"><span class="badge-dot"></span> VirusTotal</div>
             </div>
         </div>
@@ -488,10 +488,10 @@
             <div class="report-section" id="aiReport">
                 <div class="report-header" onclick="toggleReport('ai')">
                     <div class="report-header-left">
-                        <div class="report-icon">�</div>
+                        <div class="report-icon">🤖</div>
                         <div>
-                            <div class="report-title">AI Threat Intelligence</div>
-                            <div class="report-subtitle">Advanced contextual security assessment powered by Gemini AI</div>
+                            <div class="report-title">Gemini AI Analysis</div>
+                            <div class="report-subtitle">Comprehensive threat intelligence</div>
                         </div>
                     </div>
                     <div style="display: flex; align-items: center; gap: 15px;">
@@ -502,52 +502,40 @@
                 <div class="report-content" id="aiContent">
                     <div class="report-body" id="aiBody">
                         <div class="report-item">
-                            <div class="report-item-title">🎯 Verdict Summary</div>
-                            <div class="report-item-text" id="aiExplanation" style="font-size: 1.05rem; line-height: 1.8;">Loading...</div>
+                            <div class="report-item-title">🎯 Overall Assessment</div>
+                            <div class="report-item-text" id="aiExplanation">Loading...</div>
                         </div>
                         <div class="report-item" id="aiDetailedSection" style="display: none;">
-                            <div class="report-item-title">🔍 Deep Analysis</div>
-                            <div style="margin-top: 15px; background: rgba(245, 158, 11, 0.05); padding: 20px; border-radius: 8px; border-left: 4px solid var(--primary);">
-                                <div style="margin-bottom: 20px;">
-                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                        <span style="font-size: 1.2rem;">🌐</span>
-                                        <strong style="color: var(--primary); font-size: 1.05rem;">Domain Analysis</strong>
-                                    </div>
-                                    <div class="report-item-text" id="aiDomain" style="margin-left: 28px; color: rgba(255,255,255,0.9);">-</div>
+                            <div class="report-item-title">🔍 Detailed Findings</div>
+                            <div style="margin-top: 15px;">
+                                <div style="margin-bottom: 15px;">
+                                    <strong style="color: var(--primary);">Domain Analysis:</strong>
+                                    <div class="report-item-text" id="aiDomain" style="margin-top: 5px;">-</div>
                                 </div>
-                                <div style="margin-bottom: 20px;">
-                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                        <span style="font-size: 1.2rem;">🔗</span>
-                                        <strong style="color: var(--primary); font-size: 1.05rem;">URL Structure</strong>
-                                    </div>
-                                    <div class="report-item-text" id="aiUrlStructure" style="margin-left: 28px; color: rgba(255,255,255,0.9);">-</div>
+                                <div style="margin-bottom: 15px;">
+                                    <strong style="color: var(--primary);">URL Structure:</strong>
+                                    <div class="report-item-text" id="aiUrlStructure" style="margin-top: 5px;">-</div>
                                 </div>
-                                <div style="margin-bottom: 20px;">
-                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                        <span style="font-size: 1.2rem;">🔐</span>
-                                        <strong style="color: var(--primary); font-size: 1.05rem;">Security Indicators</strong>
-                                    </div>
-                                    <div class="report-item-text" id="aiSecurity" style="margin-left: 28px; color: rgba(255,255,255,0.9);">-</div>
+                                <div style="margin-bottom: 15px;">
+                                    <strong style="color: var(--primary);">Security Indicators:</strong>
+                                    <div class="report-item-text" id="aiSecurity" style="margin-top: 5px;">-</div>
                                 </div>
                                 <div>
-                                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
-                                        <span style="font-size: 1.2rem;">⚡</span>
-                                        <strong style="color: var(--primary); font-size: 1.05rem;">Threat Correlation</strong>
-                                    </div>
-                                    <div class="report-item-text" id="aiThreat" style="margin-left: 28px; color: rgba(255,255,255,0.9);">-</div>
+                                    <strong style="color: var(--primary);">Threat Correlation:</strong>
+                                    <div class="report-item-text" id="aiThreat" style="margin-top: 5px;">-</div>
                                 </div>
                             </div>
                         </div>
                         <div class="report-item" id="aiRedSection" style="display: none;">
-                            <div class="report-item-title">🚩 Security Concerns Detected</div>
+                            <div class="report-item-title">🚩 Red Flags</div>
                             <ul class="flag-list" id="aiRedList"></ul>
                         </div>
                         <div class="report-item" id="aiGreenSection" style="display: none;">
-                            <div class="report-item-title">✅ Positive Indicators</div>
+                            <div class="report-item-title">✅ Green Flags</div>
                             <ul class="flag-list" id="aiGreenList"></ul>
                         </div>
                         <div class="report-item" id="aiRecSection">
-                            <div class="report-item-title">💡 Security Recommendations</div>
+                            <div class="report-item-title">💡 Recommendations</div>
                             <ul class="flag-list" id="aiRecList"></ul>
                         </div>
                     </div>
@@ -796,7 +784,7 @@
                 item.className = 'detail-item';
                 const label = document.createElement('div');
                 label.className = 'detail-label';
-                label.textContent = key.replace(/_/g, ' ').replace(/\w/g, l => l.toUpperCase());
+                label.textContent = key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
                 const valueDiv = document.createElement('div');
                 valueDiv.className = 'detail-value';
                 if (typeof value === 'boolean') {
@@ -815,3 +803,9 @@
     </script>
 </body>
 </html>
+'''
+
+with open('Templates/index.html', 'w', encoding='utf-8') as f:
+    f.write(html_content)
+
+print("✅ Templates/index.html created successfully with improved UI!")
