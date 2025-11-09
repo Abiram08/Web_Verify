@@ -4,13 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebGuard - Website Legitimacy Checker</title>
+    <title>WebGuard - Advanced URL Security Analyzer</title>
     <style>
         :root {
             --color-background: #09090b;
             --color-foreground: #fafafa;
             --color-primary: #f59e0b;
             --color-secondary: #ea580c;
+            --color-success: #22c55e;
+            --color-warning: #eab308;
+            --color-danger: #ef4444;
+            --color-neutral-900: #171717;
             --color-neutral-800: #262626;
             --color-neutral-700: #404040;
             --color-neutral-600: #525252;
@@ -63,12 +67,35 @@
             color: transparent;
         }
 
+        .status-badges {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            background: var(--color-neutral-800);
+        }
+
+        .badge.active {
+            background: var(--color-success);
+            color: white;
+        }
+
         main {
             flex: 1;
-            max-width: 800px;
+            max-width: 900px;
             margin: 2rem auto;
             padding: 1rem;
+        }
+
+        .header {
             text-align: center;
+            margin-bottom: 2rem;
         }
 
         .header h1 {
@@ -80,11 +107,17 @@
             margin-bottom: 1rem;
         }
 
+        .header p {
+            color: var(--color-neutral-400);
+            font-size: 1.1rem;
+        }
+
         .checker-form {
             background: rgba(38, 38, 38, 0.5);
             border: 1px solid var(--color-neutral-800);
             border-radius: 0.5rem;
             padding: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .input-group {
@@ -98,6 +131,542 @@
             background: var(--color-neutral-800);
             border: 1px solid var(--color-neutral-700);
             border-radius: 0.375rem;
+            color: var(--color-foreground);
+            font-size: 1rem;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--color-primary);
+        }
+
+        .button {
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+            color: white;
+            border: none;
+            border-radius: 0.375rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .button:hover:not(:disabled) {
+            opacity: 0.9;
+        }
+
+        .button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 1rem;
+            color: var(--color-neutral-400);
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .results {
+            display: none;
+        }
+
+        .results.active {
+            display: block;
+        }
+
+        .verdict-card {
+            background: rgba(38, 38, 38, 0.5);
+            border: 2px solid;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .verdict-card.safe {
+            border-color: var(--color-success);
+        }
+
+        .verdict-card.suspicious {
+            border-color: var(--color-warning);
+        }
+
+        .verdict-card.malicious {
+            border-color: var(--color-danger);
+        }
+
+        .verdict-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+
+        .verdict-title {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .risk-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+        }
+
+        .risk-low {
+            background: var(--color-success);
+            color: white;
+        }
+
+        .risk-medium {
+            background: var(--color-warning);
+            color: white;
+        }
+
+        .risk-high {
+            background: var(--color-danger);
+            color: white;
+        }
+
+        .risk-critical {
+            background: #dc2626;
+            color: white;
+        }
+
+        .confidence-bar {
+            width: 100%;
+            height: 1.5rem;
+            background: var(--color-neutral-800);
+            border-radius: 0.375rem;
+            overflow: hidden;
+            margin: 1rem 0;
+        }
+
+        .confidence-fill {
+            height: 100%;
+            background: linear-gradient(to right, var(--color-primary), var(--color-secondary));
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .analysis-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .analysis-card {
+            background: rgba(38, 38, 38, 0.5);
+            border: 1px solid var(--color-neutral-800);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+        }
+
+        .analysis-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .analysis-result {
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: var(--color-primary);
+        }
+
+        .detail-section {
+            background: rgba(38, 38, 38, 0.5);
+            border: 1px solid var(--color-neutral-800);
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .detail-section h3 {
+            margin-bottom: 1rem;
+            color: var(--color-primary);
+        }
+
+        .recommendation-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .recommendation-list li {
+            padding: 0.75rem;
+            background: var(--color-neutral-900);
+            margin-bottom: 0.5rem;
+            border-radius: 0.375rem;
+            border-left: 3px solid var(--color-primary);
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 0.5rem;
+        }
+
+        .feature-item {
+            padding: 0.5rem;
+            background: var(--color-neutral-900);
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+        }
+
+        .feature-label {
+            color: var(--color-neutral-400);
+        }
+
+        .feature-value {
+            color: var(--color-foreground);
+            font-weight: 500;
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem 1rem;
+            color: var(--color-neutral-400);
+            border-top: 1px solid var(--color-neutral-800);
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .input-group {
+                flex-direction: column;
+            }
+
+            .analysis-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="navbar">
+        <div class="navbar-container">
+            <a href="/" class="logo">
+                <span>🛡️</span>
+                <span>WebGuard</span>
+            </a>
+            <div class="status-badges" id="statusBadges">
+                <span class="badge">ML Model</span>
+                <span class="badge">Gemini AI</span>
+                <span class="badge">VirusTotal</span>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <div class="header">
+            <h1>Advanced URL Security Analyzer</h1>
+            <p>Multi-layered protection using ML, AI, and threat intelligence</p>
+        </div>
+
+        <div class="checker-form">
+            <form id="urlForm" class="input-group">
+                <input type="url" id="urlInput" placeholder="Enter website URL (e.g., https://example.com)..." required>
+                <button type="submit" class="button" id="checkButton">
+                    <span id="buttonText">🔍 Analyze URL</span>
+                </button>
+            </form>
+        </div>
+
+        <div class="loading" id="loading">
+            <p>🔄 Analyzing URL with multiple security layers...</p>
+            <p style="font-size: 0.9rem; margin-top: 0.5rem;">This may take a few seconds</p>
+        </div>
+
+        <div class="results" id="resultsContainer">
+            <!-- Main Verdict Card -->
+            <div class="verdict-card" id="verdictCard">
+                <div class="verdict-icon" id="verdictIcon"></div>
+                <div class="verdict-title" id="verdictTitle"></div>
+                <div class="risk-badge" id="riskBadge"></div>
+                <div class="confidence-bar">
+                    <div class="confidence-fill" id="confidenceFill"></div>
+                </div>
+                <p id="analysisTime"></p>
+            </div>
+
+            <!-- Analysis Summary Grid -->
+            <div class="analysis-grid" id="analysisGrid"></div>
+
+            <!-- AI Explanation -->
+            <div class="detail-section" id="aiSection" style="display: none;">
+                <h3>🤖 AI Analysis</h3>
+                <p id="aiExplanation"></p>
+            </div>
+
+            <!-- Recommendations -->
+            <div class="detail-section" id="recommendationsSection" style="display: none;">
+                <h3>💡 Recommendations</h3>
+                <ul class="recommendation-list" id="recommendationsList"></ul>
+            </div>
+
+            <!-- Technical Details -->
+            <div class="detail-section">
+                <h3>🔧 Technical Details</h3>
+                <div class="feature-grid" id="featureGrid"></div>
+            </div>
+
+            <!-- VirusTotal Details -->
+            <div class="detail-section" id="vtSection" style="display: none;">
+                <h3>🛡️ VirusTotal Scan Results</h3>
+                <div id="vtDetails"></div>
+            </div>
+        </div>
+    </main>
+
+    <footer>
+        <p>Built with ML + Gemini AI + VirusTotal + Flask 💙</p>
+        <p style="font-size: 0.875rem; margin-top: 0.5rem;">Stay safe online!</p>
+    </footer>
+
+    <script>
+        // Check system status on load
+        fetch('/health')
+            .then(res => res.json())
+            .then(data => {
+                const badges = document.getElementById('statusBadges').children;
+                if (data.ml_model) badges[0].classList.add('active');
+                if (data.gemini_api) badges[1].classList.add('active');
+                if (data.virustotal_api) badges[2].classList.add('active');
+            })
+            .catch(err => console.error('Health check failed:', err));
+
+        document.getElementById("urlForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
+
+            const urlInput = document.getElementById("urlInput").value;
+            const loading = document.getElementById("loading");
+            const results = document.getElementById("resultsContainer");
+            const checkButton = document.getElementById("checkButton");
+            const buttonText = document.getElementById("buttonText");
+
+            if (!urlInput) {
+                alert("Please enter a URL");
+                return;
+            }
+
+            // Show loading state
+            loading.classList.add('active');
+            results.classList.remove('active');
+            checkButton.disabled = true;
+            buttonText.textContent = '⏳ Analyzing...';
+
+            try {
+                const response = await fetch("/predict", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({ url: urlInput })
+                });
+
+                const data = await response.json();
+
+                if (data.error) {
+                    alert(`Error: ${data.error}`);
+                    return;
+                }
+
+                // Display results
+                displayResults(data);
+                results.classList.add('active');
+
+            } catch (error) {
+                console.error("Error:", error);
+                alert("Failed to analyze URL. Please check if the backend is running.");
+            } finally {
+                loading.classList.remove('active');
+                checkButton.disabled = false;
+                buttonText.textContent = '🔍 Analyze URL';
+            }
+        });
+
+        function displayResults(data) {
+            const verdictCard = document.getElementById('verdictCard');
+            const verdictIcon = document.getElementById('verdictIcon');
+            const verdictTitle = document.getElementById('verdictTitle');
+            const riskBadge = document.getElementById('riskBadge');
+            const confidenceFill = document.getElementById('confidenceFill');
+            const analysisTime = document.getElementById('analysisTime');
+
+            // Set verdict styling
+            verdictCard.className = 'verdict-card ' + data.final_verdict.toLowerCase();
+
+            // Set icon based on verdict
+            const icons = {
+                'Safe': '✅',
+                'Suspicious': '⚠️',
+                'Malicious': '🚨'
+            };
+            verdictIcon.textContent = icons[data.final_verdict] || '❓';
+            verdictTitle.textContent = data.final_verdict.toUpperCase();
+
+            // Set risk badge
+            riskBadge.textContent = `Risk Level: ${data.risk_level}`;
+            riskBadge.className = 'risk-badge risk-' + data.risk_level.toLowerCase();
+
+            // Set confidence bar
+            confidenceFill.style.width = `${data.confidence}%`;
+            confidenceFill.textContent = `${data.confidence}% Confidence`;
+
+            // Set timestamp
+            const time = new Date(data.timestamp).toLocaleString();
+            analysisTime.textContent = `Analyzed at: ${time}`;
+
+            // Display analysis grid
+            displayAnalysisGrid(data.details);
+
+            // Display AI explanation
+            if (data.details.ai_analysis && data.details.ai_analysis.available) {
+                const aiSection = document.getElementById('aiSection');
+                const aiExplanation = document.getElementById('aiExplanation');
+                aiSection.style.display = 'block';
+                aiExplanation.textContent = data.details.ai_analysis.explanation;
+
+                // Display recommendations
+                if (data.details.ai_analysis.recommendations && data.details.ai_analysis.recommendations.length > 0) {
+                    const recSection = document.getElementById('recommendationsSection');
+                    const recList = document.getElementById('recommendationsList');
+                    recSection.style.display = 'block';
+                    recList.innerHTML = '';
+                    data.details.ai_analysis.recommendations.forEach(rec => {
+                        const li = document.createElement('li');
+                        li.textContent = rec;
+                        recList.appendChild(li);
+                    });
+                }
+            }
+
+            // Display features
+            displayFeatures(data.details.features);
+
+            // Display VirusTotal details
+            if (data.details.virustotal && data.details.virustotal.available) {
+                displayVirusTotal(data.details.virustotal);
+            }
+        }
+
+        function displayAnalysisGrid(details) {
+            const grid = document.getElementById('analysisGrid');
+            grid.innerHTML = '';
+
+            // ML Model Card
+            if (details.ml_model) {
+                const mlCard = createAnalysisCard(
+                    '🤖 ML Model',
+                    details.ml_model.verdict,
+                    `${details.ml_model.confidence}% confidence`
+                );
+                grid.appendChild(mlCard);
+            }
+
+            // VirusTotal Card
+            if (details.virustotal && details.virustotal.available) {
+                const vtCard = createAnalysisCard(
+                    '🛡️ VirusTotal',
+                    details.virustotal.verdict,
+                    `${details.virustotal.malicious} malicious detections`
+                );
+                grid.appendChild(vtCard);
+            }
+
+            // AI Analysis Card
+            if (details.ai_analysis && details.ai_analysis.available) {
+                const aiCard = createAnalysisCard(
+                    '🧠 Gemini AI',
+                    details.ai_analysis.verdict,
+                    `${details.ai_analysis.confidence_score}% confidence`
+                );
+                grid.appendChild(aiCard);
+            }
+        }
+
+        function createAnalysisCard(title, result, detail) {
+            const card = document.createElement('div');
+            card.className = 'analysis-card';
+            card.innerHTML = `
+                <h3>${title}</h3>
+                <div class="analysis-result">${result}</div>
+                <p style="color: var(--color-neutral-400); font-size: 0.875rem; margin-top: 0.5rem;">${detail}</p>
+            `;
+            return card;
+        }
+
+        function displayFeatures(features) {
+            const grid = document.getElementById('featureGrid');
+            grid.innerHTML = '';
+
+            for (const [key, value] of Object.entries(features)) {
+                const item = document.createElement('div');
+                item.className = 'feature-item';
+                item.innerHTML = `
+                    <div class="feature-label">${formatKey(key)}</div>
+                    <div class="feature-value">${formatValue(value)}</div>
+                `;
+                grid.appendChild(item);
+            }
+        }
+
+        function displayVirusTotal(vt) {
+            const section = document.getElementById('vtSection');
+            const details = document.getElementById('vtDetails');
+            section.style.display = 'block';
+
+            details.innerHTML = `
+                <div class="feature-grid">
+                    <div class="feature-item">
+                        <div class="feature-label">Malicious</div>
+                        <div class="feature-value" style="color: var(--color-danger);">${vt.malicious}</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-label">Suspicious</div>
+                        <div class="feature-value" style="color: var(--color-warning);">${vt.suspicious}</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-label">Harmless</div>
+                        <div class="feature-value" style="color: var(--color-success);">${vt.harmless}</div>
+                    </div>
+                    <div class="feature-item">
+                        <div class="feature-label">Undetected</div>
+                        <div class="feature-value">${vt.undetected}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatKey(key) {
+            return key.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+        }
+
+        function formatValue(value) {
+            if (typeof value === 'boolean') {
+                return value ? '✅ Yes' : '❌ No';
+            }
+            return value;
+        }
+    </script>
+
+</body>
+
+</html>
             color: var(--color-foreground);
             font-size: 1rem;
         }

@@ -30,6 +30,9 @@ build/
 .env.local
 .env.*.local
 
+# Streamlit secrets
+.streamlit/secrets.toml
+
 # Dataset files (large CSV files)
 Models/*.csv
 

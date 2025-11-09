@@ -1,5 +1,5 @@
 import streamlit as st
-from openai import OpenAI
+import google.generativeai as genai
 from urllib.parse import urlparse, quote
 import requests
 import re
@@ -16,9 +16,9 @@ import hashlib
 # -------------------------
 # CONFIG
 # -------------------------
-APP_TITLE = "AI Phishing URL Detector (GPT + VirusTotal)"
+APP_TITLE = "AI Phishing URL Detector (Gemini + VirusTotal)"
 DB_FILE = "phish_history.db"
-DEFAULT_LLM_MODEL = "gpt-4o-mini"  # change if you don't have access
+DEFAULT_LLM_MODEL = "gemini-1.5-flash"  # or gemini-1.5-pro
 
 # -------------------------
 # STREAMLIT UI SETUP
@@ -26,7 +26,7 @@ DEFAULT_LLM_MODEL = "gpt-4o-mini"  # change if you don't have access
 st.set_page_config(APP_TITLE, page_icon="🛡️", layout="centered")
 st.title("🛡️ GenAI Phishing URL Detector Combined with VirusTotal 🕵️‍♂️")
 st.markdown(
-    "This app uses OpenAI to heuristically analyze URLs and VirusTotal to check reputation. "
+    "This app uses Google Gemini AI to heuristically analyze URLs and VirusTotal to check reputation. "
     "Combined verdict and explanation are shown below. **Do not paste private credentials or sensitive tokens.**"
 )
 st.caption("Your data, our priority. Safe, secure, and always under lock and key. 🔒")
@@ -34,14 +34,20 @@ st.caption("Your data, our priority. Safe, secure, and always under lock and key
 # -------------------------
 # KEYS and CLIENTS
 # -------------------------
-OPENAI_API_KEY = st.secrets.get("OPENAI_API_KEY") or os.getenv("OPENAI_API_KEY")
-VIRUSTOTAL_API_KEY = st.secrets.get("VIRUSTOTAL_API_KEY") or os.getenv("VIRUSTOTAL_API_KEY")
+# Try to get API keys from secrets.toml, fallback to environment variables
+try:
+    GEMINI_API_KEY = st.secrets.get("GEMINI_API_KEY", os.getenv("GEMINI_API_KEY"))
+    VIRUSTOTAL_API_KEY = st.secrets.get("VIRUSTOTAL_API_KEY", os.getenv("VIRUSTOTAL_API_KEY"))
+except:
+    GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+    VIRUSTOTAL_API_KEY = os.getenv("VIRUSTOTAL_API_KEY")
 
-if not OPENAI_API_KEY:
-    st.error("OpenAI API key not found. Add OPENAI_API_KEY to .streamlit/secrets.toml or environment variable.")
+if not GEMINI_API_KEY:
+    st.error("Gemini API key not found. Add GEMINI_API_KEY to .streamlit/secrets.toml or environment variable.")
     st.stop()
 
-client = OpenAI(api_key=OPENAI_API_KEY)
+# Configure Gemini
+genai.configure(api_key=GEMINI_API_KEY)
 
 # -------------------------
 # DB helpers
@@ -339,17 +345,25 @@ Return JSON exactly with keys:
 - recommended_action: short action sentence
 """
     try:
-        resp = client.chat.completions.create(
-            model=model,
-            messages=[
-                {"role": "system", "content": "You are a concise cybersecurity analyst. Return ONLY a single JSON object."},
-                {"role": "user", "content": user_prompt},
-            ],
-            temperature=0.0,
-            max_tokens=512,
+        # Initialize Gemini model
+        model_instance = genai.GenerativeModel(model)
+        
+        # Create the prompt with system instruction
+        full_prompt = f"""You are a concise cybersecurity analyst. Return ONLY a single JSON object.
+
+{user_prompt}"""
+        
+        # Generate response
+        response = model_instance.generate_content(
+            full_prompt,
+            generation_config={
+                'temperature': 0.0,
+                'max_output_tokens': 512,
+            }
         )
-        text = resp.choices[0].message.content.strip()
-        text = re.sub(r"^``json|`json\n|``", "", text).strip()
+        
+        text = response.text.strip()
+        text = re.sub(r"^```json|```\n|```", "", text).strip()
         m = re.search(r"\{.*\}", text, flags=re.DOTALL)
         json_text = m.group(0) if m else text
         parsed = json.loads(json_text)
@@ -406,7 +420,7 @@ def combine_signals(ai_verdict, ai_score, vt_verdict):
 # Sidebar
 # -------------------------
 st.sidebar.header("Settings")
-model_choice = st.sidebar.selectbox("LLM model", [DEFAULT_LLM_MODEL, "gpt-4o", "gpt-3.5-turbo"])
+model_choice = st.sidebar.selectbox("LLM model", [DEFAULT_LLM_MODEL, "gemini-1.5-pro", "gemini-1.0-pro"])
 st.sidebar.markdown("VirusTotal key configured: " + ("✅" if VIRUSTOTAL_API_KEY else "❌"))
 st.sidebar.markdown("History stored locally in SQLite")
 if st.sidebar.button("Show recent history"):
@@ -572,4 +586,4 @@ else:
     csv_all = hist.to_csv(index=False).encode("utf-8")
     st.download_button("Download history CSV", csv_all, "phish_history.csv", "text/csv")
 
-st.caption("Built with OpenAI + VirusTotal + Streamlit and Love💙.")
+st.caption("Built with Google Gemini AI + VirusTotal + Streamlit and Love💙.")
