@@ -1,0 +1,58 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*.pyo
+*$py.class
+
+# Python virtual environment
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+.Python
+
+# IDE specific files
+.vscode/
+.idea/
+*.swp
+*.swo
+.vs/
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Streamlit secrets
+.streamlit/secrets.toml
+
+# Dataset files (large CSV files)
+Models/*.csv
+
+# Local uploads directory content (but keep the directory)
+uploads/*
+!uploads/.gitkeep
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Logs and debugging
+*.log
+logs/
+
+# Test cache
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Local development configuration
+instance/
+.webassets-cache
