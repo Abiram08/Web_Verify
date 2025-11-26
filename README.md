@@ -1,4 +1,4 @@
-# 🛡️ WebGuard: Minimalist AI Phishing Detector
+# 🛡️ WebVerify: Minimalist AI Phishing Detector
 
 **WebGuard** is a powerful, single-file cybersecurity tool designed to detect phishing URLs with high accuracy. It combines three layers of defense into a lightweight Flask application:
 
